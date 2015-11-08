@@ -1,0 +1,128 @@
+/**********************************************************
+ * gestione automatica e manuale della tapparella
+ *
+ * Data creazione 18 settembre 2013
+ * Ultima modifica 
+ *
+ * autore: Paolo Fraccaro
+ * web:    http://www.tkpaolo.altervista.org
+ * mail:     teknopaolo@gmail.com
+ *_____________________________________________________________________________________________________________________
+ *IMPORTANTE: prima di caricare o ricaricare lo sketch caricarne un altro a caso tipo Blink per resettare lorologio interno all'RTC
+ *---------------------------------------------------------------------------------------------------------------------
+ 
+/**********************************************************/
+#include <Wire.h>
+#include <RTClib.h>
+ 
+#define pin1 5
+#define pin2 6
+#define buttonup 4
+#define buttondown 7
+
+#define orainup 12         //inserisce l'orario di attivazione
+#define mininup 30         //inserisce il minuto di attivazione
+#define secinup 0          //inserisce il secondo di attivazione
+#define oraendup 12        //inserisce l'ora di disattivazione
+#define minendup 32        //inserisce il minuto di disattivazione
+#define secendup 0        //inserisce il secondo di disattivazione
+
+#define oraindown 18       //inserisce l'orario di attivazione
+#define minindown 35       //inserisce il minuto di attivazione
+#define secindown 0        //inserisce il secondo di attivazione
+#define oraenddown 18      //inserisce l'ora di disattivazione
+#define minenddown 35      //inserisce il minuto di disattivazione
+#define secenddown 10      //inserisce il secondo di disattivazione
+
+RTC_DS1307 RTC;
+int val = 0;
+
+void setup() {
+  
+  Serial.begin(9600);
+  Serial.println( "START" );
+ 
+  Wire.begin();
+  RTC.begin();
+ 
+  pinMode(pin1, OUTPUT );
+  pinMode(pin2, OUTPUT );
+  pinMode(buttonup, INPUT);
+  pinMode(buttondown, INPUT);
+    
+  RTC.sqw(0);       //0 Led off - 1 Freq 1Hz - 2 Freq 4096kHz - 3 Freq 8192kHz - 4 Freq 32768kHz
+  if (! RTC.isrunning()) {
+    Serial.println("RTC is NOT running!");
+    RTC.adjust(DateTime(__DATE__, __TIME__));
+  }
+ 
+  digitalWrite(pin1, LOW );
+  digitalWrite(pin2, LOW );
+ 
+}
+ 
+void loop() {
+  val = digitalRead(buttonup);                         // legge il valore dell'input e lo conserva  
+                                                  
+  if (val == HIGH) {                                   // controlla che l'input sia HIGH (pulsante premuto)  
+    digitalWrite(pin1, HIGH);                          // attiva il relé di salita e accende il relativo led
+    delay(5000);                                       //aspetta il finecorsa
+    digitalWrite(pin1, LOW); 
+}  
+  
+  val = digitalRead(buttondown);                       // legge il valore dell'input e lo conserva  
+                                                        
+  if (val == HIGH) {                                   // controlla che l'input sia HIGH (pulsante premuto)  
+    digitalWrite(pin2, HIGH);                          // attiva il relé di discesa e accende il relativo led
+    delay(7000);                                       // aspetta il finecorsa
+    digitalWrite(pin2, LOW);
+}  
+    
+  
+  if ( RTC.isrunning()) {
+    DateTime now = RTC.now();
+ 
+    Serial.print(now.year(), DEC);
+    Serial.print('/');
+    Serial.print(now.month(), DEC);
+    Serial.print('/');
+    Serial.print(now.day(), DEC);
+    Serial.print(' ');
+    Serial.print(now.hour(), DEC);
+    Serial.print(':');
+    Serial.print(now.minute(), DEC);
+    Serial.print(':');
+    Serial.print(now.second(), DEC);
+    Serial.println();
+ 
+    int _hour   = now.hour();
+    int _minute = now.minute();
+    int _second = now.second();
+    int salita;
+    int discesa;
+ 
+// Settore salita 
+ 
+    if ( _hour == orainup && _minute == mininup && _second == secinup) {           // attiva il relé di salita e accende il relativo led
+      digitalWrite(pin1, HIGH);
+    }
+    
+   
+    if ( _hour == oraendup && _minute == minendup && _second == secendup) {        // disattiva il relé di salita e spegne il relativo led
+      digitalWrite(pin1, LOW);
+       }  
+
+ 
+ // Settore discesa
+
+    if ( _hour == oraindown && _minute == minindown && _second == secindown ) {    // attiva il relé di discesa e accende il relativo led
+      digitalWrite(pin2, HIGH );
+    } 
+  
+    if ( _hour == oraenddown && _minute == minenddown && _second == secenddown ) { // disattiva il relé di discesa e spegne il relativo led           
+      digitalWrite(pin2, LOW );
+       }    
+    }
+
+
+}
